@@ -9,6 +9,21 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: linear-gradient(135deg, #0c6874 0%, #2c533f 50%, #0f892e 100%);
   min-height: 100vh;
+}
+
+/* Custom glow effect for logo */
+.logo-glow {
+  filter: drop-shadow(0 0 20px rgba(36, 209, 220, 0.6));
+  transition: filter 0.3s ease;
+}
+
+.logo-glow:hover {
+  filter: drop-shadow(0 0 40px rgba(36, 209, 220, 1));
+}
+
+/* Smooth transitions */
+* {
+  transition: background-color 0.3s ease, border-color 0.3s ease;
 }

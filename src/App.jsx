@@ -6,104 +6,99 @@ import Staking from './components/Staking';
 import Lending from './components/Lending';
 
 function App() {
-  const { isConnected } = useAccount();
-  const [activeTab, setActiveTab] = useState('dashboard');
+  const { isConnected } = useAccount();
+  const [activeTab, setActiveTab] = useState('dashboard');
 
-  return (
-    <div className="min-h-screen bg-gradient-to-br from-purple-600 via-purple-700 to-indigo-800">
-      {/* Navigation Bar */}
-      <nav className="bg-white/10 backdrop-blur-md border-b border-white/20">
-        <div className="container mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-2">
-              {/*                 --- LOGO UPDATE 1/2: Navigation Bar Icon ---
-              */}
-              <img 
-                src="/logo.png" 
-                alt="Tapir DeFi Logo" 
-                className="h-8 w-8" 
-              />
-              <h1 className="text-2xl font-bold text-white">Tapir DeFi</h1>
-            </div>
-            <ConnectButton />
-          </div>
-        </div>
-      </nav>
+  return (
+    <div className="min-h-screen bg-gradient-to-br from-tapir-dark via-tapir-darkest to-tapir-success">
+      {/* Navigation Bar */}
+      <nav className="bg-tapir-dark/30 backdrop-blur-md border-b border-tapir-cyan/30">
+        <div className="container mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div className="flex items-center space-x-4">
+              <img 
+                src="/logo_circ.png" 
+                alt="Tapir DeFi Logo" 
+                className="h-16 w-16 logo-glow" 
+              />
+              <h1 className="text-3xl font-bold text-tapir-cyan">Tapir DeFi</h1>
+            </div>
+            <ConnectButton />
+          </div>
+        </div>
+      </nav>
 
-      {/* Main Content */}
-      <div className="container mx-auto px-4 py-8">
-        {!isConnected ? (
-          <div className="text-center py-20">
-            <div className="bg-white/10 backdrop-blur-md rounded-2xl p-12 max-w-md mx-auto border border-white/20">
-              {/*                 --- LOGO UPDATE 2/2: Welcome Screen Icon ---
-                Using the circular logo here for a cleaner look.
-              */}
-              <img 
-                src="/logo_circ.png" 
-                alt="Welcome Tapir Logo" 
-                className="h-20 w-20 mx-auto mb-6" 
-              />
-              <h2 className="text-3xl font-bold text-white mb-4">
-                Welcome to Tapir DeFi
-              </h2>
-              <p className="text-white/80 mb-8">
-                Stake, lend, and earn rewards with your TAPIR tokens
-              </p>
-              <ConnectButton />
-            </div>
-          </div>
-        ) : (
-          <>
-            {/* Tab Navigation */}
-            <div className="flex space-x-4 mb-8">
-              <button
-                onClick={() => setActiveTab('dashboard')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  activeTab === 'dashboard'
-                    ? 'bg-white text-purple-700 shadow-lg'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                📊 Dashboard
-              </button>
-              <button
-                onClick={() => setActiveTab('staking')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  activeTab === 'staking'
-                    ? 'bg-white text-purple-700 shadow-lg'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                🥩 Staking
-              </button>
-              <button
-                onClick={() => setActiveTab('lending')}
-                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
-                  activeTab === 'lending'
-                    ? 'bg-white text-purple-700 shadow-lg'
-                    : 'bg-white/10 text-white hover:bg-white/20'
-                }`}
-              >
-                🏦 Lending
-              </button>
-            </div>
+      {/* Main Content */}
+      <div className="container mx-auto px-4 py-8">
+        {!isConnected ? (
+          <div className="text-center py-20">
+            <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-12 max-w-md mx-auto border-2 border-tapir-cyan/50 shadow-2xl">
+              <img 
+                src="/logo_circ.png" 
+                alt="Welcome Tapir Logo" 
+                className="h-48 w-48 mx-auto mb-8 logo-glow animate-pulse-glow" 
+              />
+              <h2 className="text-4xl font-bold text-tapir-cyan mb-4">
+                Welcome to Tapir DeFi
+              </h2>
+              <p className="text-tapir-green text-lg mb-8">
+                Stake, lend, and earn rewards with your TAPIR tokens
+              </p>
+              <ConnectButton />
+            </div>
+          </div>
+        ) : (
+          <>
+            {/* Tab Navigation */}
+            <div className="flex space-x-4 mb-8">
+              <button
+                onClick={() => setActiveTab('dashboard')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                  activeTab === 'dashboard'
+                    ? 'bg-tapir-cyan text-tapir-darkest shadow-lg shadow-tapir-cyan/50'
+                    : 'bg-tapir-dark/30 text-tapir-green border border-tapir-cyan/30 hover:bg-tapir-dark/50 hover:border-tapir-cyan/60'
+                }`}
+              >
+                📊 Dashboard
+              </button>
+              <button
+                onClick={() => setActiveTab('staking')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                  activeTab === 'staking'
+                    ? 'bg-tapir-cyan text-tapir-darkest shadow-lg shadow-tapir-cyan/50'
+                    : 'bg-tapir-dark/30 text-tapir-green border border-tapir-cyan/30 hover:bg-tapir-dark/50 hover:border-tapir-cyan/60'
+                }`}
+              >
+                🥩 Staking
+              </button>
+              <button
+                onClick={() => setActiveTab('lending')}
+                className={`px-6 py-3 rounded-xl font-semibold transition-all ${
+                  activeTab === 'lending'
+                    ? 'bg-tapir-cyan text-tapir-darkest shadow-lg shadow-tapir-cyan/50'
+                    : 'bg-tapir-dark/30 text-tapir-green border border-tapir-cyan/30 hover:bg-tapir-dark/50 hover:border-tapir-cyan/60'
+                }`}
+              >
+                🏦 Lending
+              </button>
+            </div>
 
-            {/* Tab Content */}
-            <div className="transition-all duration-300">
-              {activeTab === 'dashboard' && <Dashboard />}
-              {activeTab === 'staking' && <Staking />}
-              {activeTab === 'lending' && <Lending />}
-            </div>
-          </>
-        )}
-      </div>
+            {/* Tab Content */}
+            <div className="transition-all duration-300">
+              {activeTab === 'dashboard' && <Dashboard />}
+              {activeTab === 'staking' && <Staking />}
+              {activeTab === 'lending' && <Lending />}
+            </div>
+          </>
+        )}
+      </div>
 
-      {/* Footer */}
-      <footer className="text-center py-8 text-white/60">
-        <p>Built with ❤️ on Sepolia Testnet</p>
-      </footer>
-    </div>
-  );
+      {/* Footer */}
+      <footer className="text-center py-8 text-tapir-green/60">
+        <p>Built with ❤️ on Sepolia Testnet</p>
+      </footer>
+    </div>
+  );
 }
 
 export default App;
