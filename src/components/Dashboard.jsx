@@ -104,7 +104,10 @@ function Dashboard() {
   if (loading) {
     return (
       <div className="text-center py-20">
-        <div className="animate-spin text-6xl mb-4">🦫</div>
+        {/*         --- LOGO UPDATE: Loading Spinner Icon --- */}
+        <div className="animate-spin text-6xl mb-4">
+          <img src="/logo_circ.png" alt="Loading Tapir Logo" className="h-16 w-16 mx-auto" />
+        </div>
         <p className="text-white text-xl">Loading your dashboard...</p>
       </div>
     );
