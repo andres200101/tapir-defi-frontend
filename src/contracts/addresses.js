@@ -1,0 +1,11 @@
+export const CONTRACTS = {
+  sepolia: {
+    govToken: "0x12838c28B32Fb232A4CB9Caa2F9800a34e7cDf72",
+    tapirToken: "0xc1436FB8D427c67482d9De88B8CAD50052bE0104",
+    rewardToken: "0xfB0eeFEe9D3D53D4F1Eb07C3771Ac16d7dbc92D2",
+    staking: "0x6b2E811024Fe83aF1151D24A14b8Da3Bfa50970D",
+    lendingPool: "0x3b2fDb2B055570DAFe15db38B9147f1C62042B0D"
+  }
+};
+
+export const CHAIN_ID = 11155111; // Sepolia
