@@ -4,6 +4,8 @@ import { ethers } from 'ethers';
 import { CONTRACTS } from '../contracts/addresses';
 import TapirTokenABI from '../contracts/abis/TapirToken.json';
 import LendingPoolABI from '../contracts/abis/LendingPool.json';
+// New Notification Imports
+import { notifySuccess, notifyError, notifyLoading, dismissToast } from '../utils/notifications';
 
 function Lending() {
   const { address } = useAccount();
@@ -18,7 +20,7 @@ function Lending() {
   const [repayAmount, setRepayAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [txStatus, setTxStatus] = useState('');
+  // Removed: const [txStatus, setTxStatus] = useState('');
 
   useEffect(() => {
     if (address) {
@@ -53,22 +55,23 @@ function Lending() {
       });
     } catch (error) {
       console.error('Error fetching balances:', error);
+      // Optional: Add a general error notification if balances fail to load
     }
   };
 
   const handleDeposit = async () => {
     if (!depositAmount || parseFloat(depositAmount) <= 0) {
-      alert('Please enter a valid amount');
+      notifyError('Please enter a valid amount to deposit.');
       return;
     }
 
+    let loadingToast;
     try {
       setLoading(true);
-      setTxStatus('Requesting approval...');
-      
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
+
       const tapirToken = new ethers.Contract(
         CONTRACTS.sepolia.tapirToken,
         TapirTokenABI,
@@ -82,23 +85,26 @@ function Lending() {
 
       const amount = ethers.parseEther(depositAmount);
 
-      setTxStatus('Approving tokens...');
+      // 1. Approval
+      loadingToast = notifyLoading('Approving TAPIR tokens for collateral...');
       const approveTx = await tapirToken.approve(CONTRACTS.sepolia.lendingPool, amount);
       await approveTx.wait();
+      dismissToast(loadingToast);
 
-      setTxStatus('Depositing collateral...');
+      // 2. Deposit
+      loadingToast = notifyLoading('Depositing collateral...');
       const depositTx = await lendingPool.depositCollateral(amount);
       await depositTx.wait();
+      dismissToast(loadingToast);
 
-      setTxStatus('✅ Successfully deposited!');
+      notifySuccess('Successfully deposited TAPIR as collateral!', depositTx.hash);
       setDepositAmount('');
       await fetchBalances();
-      
-      setTimeout(() => setTxStatus(''), 3000);
+
     } catch (error) {
       console.error('Error depositing:', error);
-      setTxStatus('❌ Transaction failed');
-      setTimeout(() => setTxStatus(''), 3000);
+      if (loadingToast) dismissToast(loadingToast);
+      notifyError('Transaction failed: ' + (error.reason || error.message));
     } finally {
       setLoading(false);
     }
@@ -106,17 +112,18 @@ function Lending() {
 
   const handleBorrow = async () => {
     if (!borrowAmount || parseFloat(borrowAmount) <= 0) {
-      alert('Please enter a valid amount');
+      notifyError('Please enter a valid amount to borrow.');
       return;
     }
 
+    let loadingToast;
     try {
       setLoading(true);
-      setTxStatus('Borrowing tokens...');
-      
+      loadingToast = notifyLoading('Borrowing tokens...');
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
+
       const lendingPool = new ethers.Contract(
         CONTRACTS.sepolia.lendingPool,
         LendingPoolABI,
@@ -127,15 +134,16 @@ function Lending() {
       const borrowTx = await lendingPool.borrow(amount);
       await borrowTx.wait();
 
-      setTxStatus('✅ Successfully borrowed!');
+      dismissToast(loadingToast);
+      notifySuccess('Successfully borrowed TAPIR!', borrowTx.hash);
       setBorrowAmount('');
       await fetchBalances();
-      
-      setTimeout(() => setTxStatus(''), 3000);
+
     } catch (error) {
       console.error('Error borrowing:', error);
-      setTxStatus('❌ Transaction failed: ' + (error.reason || error.message));
-      setTimeout(() => setTxStatus(''), 5000);
+      if (loadingToast) dismissToast(loadingToast);
+      // More specific error message for borrowing failure
+      notifyError('Borrow transaction failed. Check collateral and current borrow limit. ' + (error.reason || error.message));
     } finally {
       setLoading(false);
     }
@@ -143,17 +151,17 @@ function Lending() {
 
   const handleRepay = async () => {
     if (!repayAmount || parseFloat(repayAmount) <= 0) {
-      alert('Please enter a valid amount');
+      notifyError('Please enter a valid amount to repay.');
       return;
     }
 
+    let loadingToast;
     try {
       setLoading(true);
-      setTxStatus('Requesting approval...');
-      
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
+
       const tapirToken = new ethers.Contract(
         CONTRACTS.sepolia.tapirToken,
         TapirTokenABI,
@@ -167,23 +175,26 @@ function Lending() {
 
       const amount = ethers.parseEther(repayAmount);
 
-      setTxStatus('Approving tokens...');
+      // 1. Approval
+      loadingToast = notifyLoading('Approving tokens for repayment...');
       const approveTx = await tapirToken.approve(CONTRACTS.sepolia.lendingPool, amount);
       await approveTx.wait();
+      dismissToast(loadingToast);
 
-      setTxStatus('Repaying loan...');
+      // 2. Repay
+      loadingToast = notifyLoading('Repaying loan...');
       const repayTx = await lendingPool.repay(amount);
       await repayTx.wait();
+      dismissToast(loadingToast);
 
-      setTxStatus('✅ Successfully repaid!');
+      notifySuccess('Successfully repaid loan!', repayTx.hash);
       setRepayAmount('');
       await fetchBalances();
-      
-      setTimeout(() => setTxStatus(''), 3000);
+
     } catch (error) {
       console.error('Error repaying:', error);
-      setTxStatus('❌ Transaction failed');
-      setTimeout(() => setTxStatus(''), 3000);
+      if (loadingToast) dismissToast(loadingToast);
+      notifyError('Transaction failed: ' + (error.reason || error.message));
     } finally {
       setLoading(false);
     }
@@ -191,17 +202,18 @@ function Lending() {
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      alert('Please enter a valid amount');
+      notifyError('Please enter a valid amount to withdraw.');
       return;
     }
 
+    let loadingToast;
     try {
       setLoading(true);
-      setTxStatus('Withdrawing collateral...');
-      
+      loadingToast = notifyLoading('Withdrawing collateral...');
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
+
       const lendingPool = new ethers.Contract(
         CONTRACTS.sepolia.lendingPool,
         LendingPoolABI,
@@ -212,15 +224,15 @@ function Lending() {
       const withdrawTx = await lendingPool.withdrawCollateral(amount);
       await withdrawTx.wait();
 
-      setTxStatus('✅ Successfully withdrawn!');
+      dismissToast(loadingToast);
+      notifySuccess('Successfully withdrawn collateral!', withdrawTx.hash);
       setWithdrawAmount('');
       await fetchBalances();
-      
-      setTimeout(() => setTxStatus(''), 3000);
+
     } catch (error) {
       console.error('Error withdrawing:', error);
-      setTxStatus('❌ Transaction failed: You may need to repay your loan first');
-      setTimeout(() => setTxStatus(''), 5000);
+      if (loadingToast) dismissToast(loadingToast);
+      notifyError('Withdrawal failed: Ensure you maintain a healthy LTV ratio. ' + (error.reason || error.message));
     } finally {
       setLoading(false);
     }
@@ -233,15 +245,25 @@ function Lending() {
     });
   };
 
-  const maxBorrowable = parseFloat(balances.collateral) * 0.5 - parseFloat(balances.borrowed);
+  const maxBorrowable = Math.max(0, parseFloat(balances.collateral) * 0.5 - parseFloat(balances.borrowed));
+  
   const healthFactor = parseFloat(balances.borrowed) > 0 
     ? ((parseFloat(balances.collateral) * 0.5) / parseFloat(balances.borrowed) * 100).toFixed(0)
-    : 'Safe';
+    : (parseFloat(balances.collateral) > 0 ? 'Safe' : 'N/A');
+
+  const healthColor = () => {
+    const factor = parseFloat(healthFactor);
+    if (isNaN(factor) || healthFactor === 'Safe' || healthFactor === 'N/A') return 'text-tapir-success';
+    if (factor > 150) return 'text-tapir-success';
+    if (factor > 110) return 'text-yellow-400';
+    return 'text-red-500';
+  }
 
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+      {/* Updated Grid: grid-cols-1 md:grid-cols-4 gap-6 -> grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-6">
         <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-6 border-2 border-tapir-cyan/50 shadow-lg">
           <p className="text-tapir-green text-sm mb-2">Wallet Balance</p>
           <p className="text-4xl font-bold text-tapir-cyan">{formatNumber(balances.wallet)}</p>
@@ -255,27 +277,21 @@ function Lending() {
         </div>
 
         <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-6 border-2 border-red-500/50 shadow-lg">
-          <p className="text-tapir-green text-sm mb-2">Borrowed</p>
-          <p className="text-4xl font-bold text-red-400">{formatNumber(balances.borrowed)}</p>
+          <p className="text-tapir-green text-sm mb-2">Borrowed (+ Interest)</p>
+          <p className="text-4xl font-bold text-red-400">{formatNumber(parseFloat(balances.borrowed) + parseFloat(balances.interest))}</p>
           <p className="text-tapir-green/60 text-sm mt-1">TAPIR</p>
         </div>
 
         <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-6 border-2 border-tapir-success/50 shadow-lg">
           <p className="text-tapir-green text-sm mb-2">Health Factor</p>
-          <p className="text-4xl font-bold text-tapir-success">{healthFactor}</p>
+          <p className={`text-4xl font-bold ${healthColor()}`}>{healthFactor}</p>
           <p className="text-tapir-green/60 text-sm mt-1">LTV Ratio</p>
         </div>
       </div>
 
-      {/* Status Message */}
-      {txStatus && (
-        <div className="bg-tapir-dark/40 backdrop-blur-md rounded-xl p-4 border-2 border-tapir-cyan/50 text-center shadow-lg">
-          <p className="text-tapir-cyan font-semibold text-lg">{txStatus}</p>
-        </div>
-      )}
-
       {/* Action Cards - Row 1 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Updated Grid: grid-cols-1 md:grid-cols-2 gap-6 -> grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* Deposit Collateral */}
         <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-6 border-2 border-tapir-cyan/50 shadow-lg">
           <h3 className="text-2xl font-bold text-tapir-cyan mb-4 flex items-center">
@@ -284,7 +300,7 @@ function Lending() {
           <p className="text-tapir-green/80 mb-4">
             Deposit TAPIR tokens as collateral to borrow against them.
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-tapir-green text-sm block mb-2">Amount to Deposit</label>
@@ -319,9 +335,9 @@ function Lending() {
             <span className="mr-3">🏦</span> Borrow TAPIR
           </h3>
           <p className="text-tapir-green/80 mb-4">
-            Borrow up to 50% of your collateral value. Max: {formatNumber(maxBorrowable)} TAPIR
+            Borrow up to 50% of your collateral value. Max: <span className="text-tapir-cyan font-semibold">{formatNumber(maxBorrowable)}</span> TAPIR
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-tapir-green text-sm block mb-2">Amount to Borrow</label>
@@ -333,7 +349,7 @@ function Lending() {
                 className="w-full px-4 py-3 bg-tapir-darkest/30 border-2 border-tapir-cyan/30 rounded-xl text-tapir-cyan placeholder-tapir-green/40 focus:outline-none focus:border-tapir-cyan/60"
               />
               <button
-                onClick={() => setBorrowAmount(maxBorrowable.toFixed(2))}
+                onClick={() => setBorrowAmount(maxBorrowable.toFixed(4))}
                 className="text-sm text-tapir-cyan hover:text-tapir-green mt-2 transition-colors"
               >
                 Max: {formatNumber(maxBorrowable)} TAPIR
@@ -352,16 +368,17 @@ function Lending() {
       </div>
 
       {/* Action Cards - Row 2 */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Updated Grid: grid-cols-1 md:grid-cols-2 gap-6 -> grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* Repay */}
         <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-6 border-2 border-yellow-500/50 shadow-lg">
           <h3 className="text-2xl font-bold text-yellow-400 mb-4 flex items-center">
             <span className="mr-3">💸</span> Repay Loan
           </h3>
           <p className="text-tapir-green/80 mb-4">
-            Repay your borrowed amount plus interest. Total owed: {formatNumber(parseFloat(balances.borrowed) + parseFloat(balances.interest))} TAPIR
+            Repay your borrowed amount plus interest. Total owed: <span className="text-yellow-400 font-semibold">{formatNumber(parseFloat(balances.borrowed) + parseFloat(balances.interest))}</span> TAPIR
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-tapir-green text-sm block mb-2">Amount to Repay</label>
@@ -377,7 +394,7 @@ function Lending() {
                 className="text-sm text-tapir-cyan hover:text-tapir-green mt-2 transition-colors"
               >
                 Max: {formatNumber(parseFloat(balances.borrowed) + parseFloat(balances.interest))} TAPIR
-              </button>
+              </button> {/* <-- THIS IS THE FIX. Was </entry> */}
             </div>
 
             <button
@@ -396,9 +413,9 @@ function Lending() {
             <span className="mr-3">🔓</span> Withdraw Collateral
           </h3>
           <p className="text-tapir-green/80 mb-4">
-            Withdraw your collateral. Must maintain 50% LTV ratio.
+            Withdraw your collateral. Must maintain a healthy LTV ratio.
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-tapir-green text-sm block mb-2">Amount to Withdraw</label>
@@ -435,10 +452,10 @@ function Lending() {
         </h4>
         <ul className="text-tapir-green/80 space-y-2">
           <li>• Deposit TAPIR tokens as collateral</li>
-          <li>• Borrow up to 50% of your collateral value (LTV ratio)</li>
+          <li>• Borrow up to **50%** of your collateral value (LTV ratio)</li>
           <li>• Interest accrues at 10% APR on borrowed amount</li>
           <li>• Repay your loan anytime to unlock your collateral</li>
-          <li>• Maintain healthy LTV ratio to avoid liquidation</li>
+          <li>• Maintain a **Health Factor** above 100 to avoid liquidation</li>
         </ul>
       </div>
     </div>

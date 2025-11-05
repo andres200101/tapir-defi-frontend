@@ -6,14 +6,20 @@ export default {
   ],
   theme: {
     extend: {
+      // START of added utilities
+      screens: {
+        'xs': '475px',
+      },
+      // END of added utilities
+
       colors: {
         tapir: {
-          cyan: '#24d1dc',        // Mermaid Net - Primary accent
-          green: '#74ef93',       // Grotesque Green - Highlights
-          dark: '#0c6874',        // Kingfisher Bright - Dark backgrounds
-          accent: '#449454',      // Discover Deco - Buttons
-          success: '#0f892e',     // Oriental Herbs - Success states
-          darkest: '#2c533f',     // Green Stain - Deep backgrounds
+          cyan: '#24d1dc',        // Mermaid Net - Primary accent
+          green: '#74ef93',       // Grotesque Green - Highlights
+          dark: '#0c6874',        // Kingfisher Bright - Dark backgrounds
+          accent: '#449454',      // Discover Deco - Buttons
+          success: '#0f892e',     // Oriental Herbs - Success states
+          darkest: '#2c533f',     // Green Stain - Deep backgrounds
         }
       },
       animation: {

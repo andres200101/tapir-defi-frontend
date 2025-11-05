@@ -4,6 +4,10 @@ import { ethers } from 'ethers';
 import { CONTRACTS } from '../contracts/addresses';
 import TapirTokenABI from '../contracts/abis/TapirToken.json';
 import StakingABI from '../contracts/abis/Staking.json';
+import { playCoin } from '../utils/sounds';
+import { playClick } from '../utils/sounds';
+// New Notification Imports
+import { notifySuccess, notifyError, notifyLoading, dismissToast } from '../utils/notifications';
 
 function Staking() {
   const { address } = useAccount();
@@ -15,7 +19,7 @@ function Staking() {
   const [stakeAmount, setStakeAmount] = useState('');
   const [withdrawAmount, setWithdrawAmount] = useState('');
   const [loading, setLoading] = useState(false);
-  const [txStatus, setTxStatus] = useState('');
+  // Removed: const [txStatus, setTxStatus] = useState('');
 
   useEffect(() => {
     if (address) {
@@ -50,22 +54,23 @@ function Staking() {
       });
     } catch (error) {
       console.error('Error fetching balances:', error);
+      // Optional: Add a general error notification if balances fail to load
     }
   };
 
   const handleStake = async () => {
     if (!stakeAmount || parseFloat(stakeAmount) <= 0) {
-      alert('Please enter a valid amount');
+      notifyError('Please enter a valid amount to stake.');
       return;
     }
 
+    let loadingToast;
     try {
       setLoading(true);
-      setTxStatus('Requesting approval...');
-      
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
+
       const tapirToken = new ethers.Contract(
         CONTRACTS.sepolia.tapirToken,
         TapirTokenABI,
@@ -79,23 +84,26 @@ function Staking() {
 
       const amount = ethers.parseEther(stakeAmount);
 
-      setTxStatus('Approving tokens...');
+      // 1. Approval
+      loadingToast = notifyLoading('Approving TAPIR tokens...');
       const approveTx = await tapirToken.approve(CONTRACTS.sepolia.staking, amount);
       await approveTx.wait();
+      dismissToast(loadingToast);
 
-      setTxStatus('Staking tokens...');
+      // 2. Staking
+      loadingToast = notifyLoading('Staking tokens...');
       const stakeTx = await staking.stake(amount);
       await stakeTx.wait();
+      dismissToast(loadingToast);
 
-      setTxStatus('✅ Successfully staked!');
+      notifySuccess('Successfully staked TAPIR!', stakeTx.hash);
       setStakeAmount('');
       await fetchBalances();
-      
-      setTimeout(() => setTxStatus(''), 3000);
+
     } catch (error) {
       console.error('Error staking:', error);
-      setTxStatus('❌ Transaction failed');
-      setTimeout(() => setTxStatus(''), 3000);
+      if (loadingToast) dismissToast(loadingToast);
+      notifyError('Transaction failed: ' + (error.reason || error.message));
     } finally {
       setLoading(false);
     }
@@ -103,17 +111,18 @@ function Staking() {
 
   const handleWithdraw = async () => {
     if (!withdrawAmount || parseFloat(withdrawAmount) <= 0) {
-      alert('Please enter a valid amount');
+      notifyError('Please enter a valid amount to withdraw.');
       return;
     }
 
+    let loadingToast;
     try {
       setLoading(true);
-      setTxStatus('Withdrawing tokens...');
-      
+      loadingToast = notifyLoading('Withdrawing tokens...');
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
+
       const staking = new ethers.Contract(
         CONTRACTS.sepolia.staking,
         StakingABI,
@@ -124,28 +133,28 @@ function Staking() {
       const withdrawTx = await staking.withdraw(amount);
       await withdrawTx.wait();
 
-      setTxStatus('✅ Successfully withdrawn!');
+      dismissToast(loadingToast);
+      notifySuccess('Successfully withdrawn TAPIR!', withdrawTx.hash);
       setWithdrawAmount('');
       await fetchBalances();
-      
-      setTimeout(() => setTxStatus(''), 3000);
+
     } catch (error) {
       console.error('Error withdrawing:', error);
-      setTxStatus('❌ Transaction failed');
-      setTimeout(() => setTxStatus(''), 3000);
+      if (loadingToast) dismissToast(loadingToast);
+      notifyError('Transaction failed: ' + (error.reason || error.message));
     } finally {
       setLoading(false);
     }
   };
 
+
   const handleClaimRewards = async () => {
     try {
       setLoading(true);
-      setTxStatus('Claiming rewards...');
-      
+
       const provider = new ethers.BrowserProvider(window.ethereum);
       const signer = await provider.getSigner();
-      
+
       const staking = new ethers.Contract(
         CONTRACTS.sepolia.staking,
         StakingABI,
@@ -155,14 +164,12 @@ function Staking() {
       const claimTx = await staking.claimReward();
       await claimTx.wait();
 
-      setTxStatus('✅ Rewards claimed!');
+      playCoin(); // ADD THIS LINE - Special coin sound!
+      notifySuccess('✅ Rewards claimed!', claimTx.hash);
       await fetchBalances();
-      
-      setTimeout(() => setTxStatus(''), 3000);
     } catch (error) {
       console.error('Error claiming rewards:', error);
-      setTxStatus('❌ Transaction failed');
-      setTimeout(() => setTxStatus(''), 3000);
+      notifyError('❌ Transaction failed');
     } finally {
       setLoading(false);
     }
@@ -178,7 +185,8 @@ function Staking() {
   return (
     <div className="space-y-6">
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      {/* Updated Grid: grid-cols-1 md:grid-cols-3 gap-6 -> grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6 */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 md:gap-6">
         <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-6 border-2 border-tapir-cyan/50 shadow-lg">
           <p className="text-tapir-green text-sm mb-2">Wallet Balance</p>
           <p className="text-4xl font-bold text-tapir-cyan">{formatNumber(balances.wallet)}</p>
@@ -198,15 +206,9 @@ function Staking() {
         </div>
       </div>
 
-      {/* Status Message */}
-      {txStatus && (
-        <div className="bg-tapir-dark/40 backdrop-blur-md rounded-xl p-4 border-2 border-tapir-cyan/50 text-center shadow-lg">
-          <p className="text-tapir-cyan font-semibold text-lg">{txStatus}</p>
-        </div>
-      )}
-
       {/* Action Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      {/* Updated Grid: grid-cols-1 md:grid-cols-2 gap-6 -> grid-cols-1 md:grid-cols-2 gap-4 md:gap-6 */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
         {/* Stake Card */}
         <div className="bg-tapir-dark/40 backdrop-blur-md rounded-2xl p-6 border-2 border-tapir-green/50 shadow-lg">
           <h3 className="text-2xl font-bold text-tapir-green mb-4 flex items-center">
@@ -215,7 +217,7 @@ function Staking() {
           <p className="text-tapir-green/80 mb-4">
             Stake your TAPIR tokens to earn TRWD rewards. Current APY: ~3650%
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-tapir-green text-sm block mb-2">Amount to Stake</label>
@@ -227,7 +229,10 @@ function Staking() {
                 className="w-full px-4 py-3 bg-tapir-darkest/30 border-2 border-tapir-cyan/30 rounded-xl text-tapir-cyan placeholder-tapir-green/40 focus:outline-none focus:border-tapir-cyan/60"
               />
               <button
-                onClick={() => setStakeAmount(balances.wallet)}
+                onClick={() => {
+                  playClick(); // ADDED playClick
+                  setStakeAmount(balances.wallet);
+                }}
                 className="text-sm text-tapir-cyan hover:text-tapir-green mt-2 transition-colors"
               >
                 Max: {formatNumber(balances.wallet)} TAPIR
@@ -235,7 +240,10 @@ function Staking() {
             </div>
 
             <button
-              onClick={handleStake}
+              onClick={() => {
+                playClick(); // ADDED playClick
+                handleStake();
+              }}
               disabled={loading}
               className="w-full py-3 bg-tapir-success hover:bg-tapir-accent disabled:bg-gray-500 text-white font-semibold rounded-xl transition-all shadow-lg"
             >
@@ -252,7 +260,7 @@ function Staking() {
           <p className="text-tapir-green/80 mb-4">
             Withdraw your staked TAPIR tokens back to your wallet.
           </p>
-          
+
           <div className="space-y-4">
             <div>
               <label className="text-tapir-green text-sm block mb-2">Amount to Withdraw</label>
@@ -264,7 +272,10 @@ function Staking() {
                 className="w-full px-4 py-3 bg-tapir-darkest/30 border-2 border-tapir-cyan/30 rounded-xl text-tapir-cyan placeholder-tapir-green/40 focus:outline-none focus:border-tapir-cyan/60"
               />
               <button
-                onClick={() => setWithdrawAmount(balances.staked)}
+                onClick={() => {
+                  playClick(); // ADDED playClick
+                  setWithdrawAmount(balances.staked);
+                }}
                 className="text-sm text-tapir-cyan hover:text-tapir-green mt-2 transition-colors"
               >
                 Max: {formatNumber(balances.staked)} TAPIR
@@ -272,7 +283,10 @@ function Staking() {
             </div>
 
             <button
-              onClick={handleWithdraw}
+              onClick={() => {
+                playClick(); // ADDED playClick
+                handleWithdraw();
+              }}
               disabled={loading}
               className="w-full py-3 bg-red-600 hover:bg-red-700 disabled:bg-gray-500 text-white font-semibold rounded-xl transition-all shadow-lg"
             >
@@ -294,7 +308,10 @@ function Staking() {
             </p>
           </div>
           <button
-            onClick={handleClaimRewards}
+            onClick={() => {
+              playClick(); // ADDED playClick
+              handleClaimRewards();
+            }}
             disabled={loading || parseFloat(balances.pending) === 0}
             className="px-8 py-4 bg-tapir-cyan hover:bg-tapir-green disabled:bg-gray-500 text-tapir-darkest font-bold rounded-xl transition-all shadow-lg shadow-tapir-cyan/50 hover:shadow-tapir-green/50 text-lg"
           >
