@@ -1,4 +1,5 @@
-import { createContext, useContext, useState, useEffect } from 'react';
+// src/contexts/ThemeContext.jsx
+import React, { createContext, useContext, useState, useEffect } from 'react';
 
 const ThemeContext = createContext();
 
@@ -11,22 +12,39 @@ export const useTheme = () => {
 };
 
 export const ThemeProvider = ({ children }) => {
+  // Default to 'dark' for new users (you chose A)
   const [theme, setTheme] = useState(() => {
-    const saved = localStorage.getItem('tapir-theme');
-    return saved || 'dark';
+    try {
+      const saved = localStorage.getItem('tapir-theme');
+      return saved || 'dark';
+    } catch (e) {
+      return 'dark';
+    }
   });
 
   useEffect(() => {
-    localStorage.setItem('tapir-theme', theme);
-    document.documentElement.classList.toggle('light-mode', theme === 'light');
+    try {
+      localStorage.setItem('tapir-theme', theme);
+    } catch (e) {
+      // ignore localStorage errors
+    }
+
+    // Use the canonical tailwind class "dark" and a "light" class for CSS variables
+    if (theme === 'dark') {
+      document.documentElement.classList.add('dark');
+      document.documentElement.classList.remove('light');
+    } else {
+      document.documentElement.classList.add('light');
+      document.documentElement.classList.remove('dark');
+    }
   }, [theme]);
 
   const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+    setTheme(prev => (prev === 'dark' ? 'light' : 'dark'));
   };
 
   return (
-    <ThemeContext.Provider value={{ theme, toggleTheme }}>
+    <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>
       {children}
     </ThemeContext.Provider>
   );

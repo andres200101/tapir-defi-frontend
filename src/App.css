@@ -40,3 +40,8 @@
 .read-the-docs {
   color: #888;
 }
+.tapir-bg {
+  background: linear-gradient(135deg, #0a0e1a, #111827, #0e7490, #15803d);
+  background-size: 400% 400%;
+  animation: gradientShift 16s ease infinite;
+}

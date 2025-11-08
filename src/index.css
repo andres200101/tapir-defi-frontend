@@ -9,54 +9,19 @@ body {
     sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  background: linear-gradient(135deg, #0c6874 0%, #2c533f 50%, #0f892e 100%);
-  min-height: 100vh;
 }
 
 /* Custom glow effect for logo */
 .logo-glow {
-  filter: drop-shadow(0 0 20px rgba(36, 209, 220, 0.6));
+  filter: drop-shadow(0 0 20px rgba(6, 182, 212, 0.6));
   transition: filter 0.3s ease;
 }
 
 .logo-glow:hover {
-  filter: drop-shadow(0 0 40px rgba(36, 209, 220, 1));
+  filter: drop-shadow(0 0 40px rgba(6, 182, 212, 1));
 }
 
 /* Smooth transitions */
 * {
   transition: background-color 0.3s ease, border-color 0.3s ease;
-}
-
-
-/* Light Mode Styles */
-html.light-mode {
-  --bg-gradient-start: #e0f2f1;
-  --bg-gradient-mid: #b2dfdb;
-  --bg-gradient-end: #80cbc4;
-}
-
-html.light-mode body {
-  background: linear-gradient(135deg, 
-    var(--bg-gradient-start) 0%, 
-    var(--bg-gradient-mid) 50%, 
-    var(--bg-gradient-end) 100%
-  );
-}
-
-/* Light mode card backgrounds */
-html.light-mode .bg-tapir-dark\/40 {
-  background-color: rgba(255, 255, 255, 0.8) !important;
-}
-
-html.light-mode .text-tapir-cyan {
-  color: #0c6874 !important;
-}
-
-html.light-mode .text-tapir-green {
-  color: #0f892e !important;
-}
-
-html.light-mode .border-tapir-cyan\/50 {
-  border-color: rgba(12, 104, 116, 0.5) !important;
 }

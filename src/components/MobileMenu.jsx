@@ -1,59 +1,72 @@
-import { useState } from 'react';
+import { motion, AnimatePresence } from "framer-motion";
+import { FiX } from "react-icons/fi";
+import { playClick } from "../utils/sounds";
+import { useTheme } from "../contexts/ThemeContext";
 
-function MobileMenu({ activeTab, setActiveTab }) {
-  const [isOpen, setIsOpen] = useState(false);
+export default function MobileMenu({ open, setOpen, activeTab, setActiveTab }) {
+  const { theme } = useTheme();
 
-  const menuItems = [
-    { id: 'dashboard', label: '📊 Dashboard' },
-    { id: 'staking', label: '🥩 Staking' },
-    { id: 'lending', label: '🏦 Lending' },
+  const links = [
+    { name: "Dashboard", id: "dashboard" },
+    { name: "Staking", id: "staking" },
+    { name: "Lending", id: "lending" },
   ];
 
   return (
-    <div className="md:hidden">
-      {/* Hamburger Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="p-2 text-tapir-cyan focus:outline-none"
-      >
-        <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-          {isOpen ? (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          ) : (
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-          )}
-        </svg>
-      </button>
-
-      {/* Mobile Menu Overlay */}
-      {isOpen && (
-        <>
-          <div 
-            className="fixed inset-0 bg-black/50 z-40"
-            onClick={() => setIsOpen(false)}
-          />
-          <div className="fixed top-20 left-0 right-0 bg-tapir-dark/95 backdrop-blur-md border-b-2 border-tapir-cyan/50 z-50 p-4">
-            {menuItems.map(item => (
+    <AnimatePresence>
+      {open && (
+        <motion.div
+          className="fixed inset-0 z-[60] bg-black/60 backdrop-blur-md md:hidden"
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          exit={{ opacity: 0 }}
+          onClick={() => setOpen(false)}
+        >
+          <motion.div
+            className={`absolute top-0 right-0 w-64 h-full ${
+              theme === "light" ? "bg-white/90" : "bg-[#0b0b0b]/90"
+            } border-l border-white/10 p-5 flex flex-col gap-6`}
+            initial={{ x: "100%" }}
+            animate={{ x: 0 }}
+            exit={{ x: "100%" }}
+            transition={{ type: "spring", stiffness: 200, damping: 25 }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="flex items-center justify-between">
+              <h2 className="theme-text text-xl font-bold">Menu</h2>
               <button
-                key={item.id}
                 onClick={() => {
-                  setActiveTab(item.id);
-                  setIsOpen(false);
+                  playClick();
+                  setOpen(false);
                 }}
-                className={`w-full text-left px-6 py-4 rounded-xl mb-2 font-semibold transition-all ${
-                  activeTab === item.id
-                    ? 'bg-tapir-cyan text-tapir-darkest'
-                    : 'bg-tapir-dark/30 text-tapir-green border border-tapir-cyan/30'
-                }`}
+                className="p-2 rounded-lg hover:bg-white/10 transition-all"
               >
-                {item.label}
+                <FiX className="text-2xl theme-text" />
               </button>
-            ))}
-          </div>
-        </>
+            </div>
+
+            <div className="flex flex-col gap-3 mt-4">
+              {links.map((item) => (
+                <button
+                  key={item.id}
+                  onClick={() => {
+                    playClick();
+                    setActiveTab(item.id);
+                    setOpen(false);
+                  }}
+                  className={`px-4 py-2 rounded-lg font-semibold transition-all text-left ${
+                    activeTab === item.id
+                      ? "bg-gradient-to-r from-cyan-400 to-emerald-400 text-black"
+                      : "theme-text hover:bg-white/10"
+                  }`}
+                >
+                  {item.name}
+                </button>
+              ))}
+            </div>
+          </motion.div>
+        </motion.div>
       )}
-    </div>
+    </AnimatePresence>
   );
 }
-
-export default MobileMenu;

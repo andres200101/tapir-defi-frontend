@@ -1,28 +1,30 @@
-import { useState, useEffect } from 'react';
+// src/hooks/useCountUp.js
+import { useEffect, useState } from "react";
 
-export const useCountUp = (end, duration = 2000) => {
-  const [count, setCount] = useState(0);
+export default function useCountUp(value, duration = 800) {
+  const [display, setDisplay] = useState(0);
 
   useEffect(() => {
-    let startTime;
-    let animationFrame;
+    let start = 0;
+    const end = Number(value);
+    if (isNaN(end)) return setDisplay(0);
+    if (end === 0) return setDisplay(0);
 
-    const animate = (currentTime) => {
-      if (!startTime) startTime = currentTime;
-      const progress = (currentTime - startTime) / duration;
-
-      if (progress < 1) {
-        setCount(end * progress);
-        animationFrame = requestAnimationFrame(animate);
-      } else {
-        setCount(end);
+    const increment = end / (duration / 16);
+    const timer = setInterval(() => {
+      start += increment;
+      if (start >= end) {
+        start = end;
+        clearInterval(timer);
       }
-    };
+      setDisplay(start);
+    }, 16);
 
-    animationFrame = requestAnimationFrame(animate);
+    return () => clearInterval(timer);
+  }, [value, duration]);
 
-    return () => cancelAnimationFrame(animationFrame);
-  }, [end, duration]);
-
-  return count;
-};
+  return Intl.NumberFormat("en-US", {
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 2
+  }).format(display);
+}
